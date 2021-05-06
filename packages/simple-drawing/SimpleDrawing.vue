@@ -6,32 +6,22 @@
       download="picture.png"
       v-show="false"
     ></a>
-    <el-button type="primary" @click="handleShowCanvas">showCanvas</el-button>
-    <el-dialog
-      destroy-on-close
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :show-close="false"
-      :visible.sync="show"
-      fullscreen
-    >
-      <p slot="title" class="title">Vue-ImagePainter🎨</p>
-      <div class="d_body">
+      <div class="d_body" ref="body">
         <div class="board" ref="board">
           <canvas
             id="ctx_front"
             ref="ctx_front"
-            :style="'cursor:' + cursor"
+            :style="canvasStyle"
           ></canvas>
           <canvas
             id="ctx_base"
             ref="ctx_base"
-            :style="'cursor:' + cursor"
+            :style="canvasStyle"
           ></canvas>
           <canvas
             id="ctx_back"
             ref="ctx_back"
-            :style="'cursor:' + cursor"
+            :style="canvasStyle"
           ></canvas>
           <input
             name="text"
@@ -46,7 +36,12 @@
             "
           />
         </div>
-        <div :class="['tools', 'settings', isExpand ? '' : 'noExpand']">
+        <div :class="['top_tools','tools', 'settings', isExpand ? '' : 'noExpand']">
+          <div class="tool_item size_setting">
+            <input id="canvas_width" v-model.number="canvasWidth" @blur="handleCanvasSizeChange" />
+            <span>x</span>
+            <input  id="canvas_height" v-model.number="canvasHeight" @blur="handleCanvasSizeChange" />
+          </div>
           <div
             class="tool_item"
             v-for="(item, index) in settings"
@@ -129,7 +124,7 @@
             ></span>
           </div>
         </div>
-        <div :class="['tools', 'bars', showTools ? '' : 'hideTools']">
+        <div :class="['tools', 'bars']">
           <div
             class="el-icon-s-tools arrow"
             v-if="!showTools"
@@ -142,36 +137,66 @@
             title="收起"
             @click.stop="handleShowTools(0)"
           ></div>
-          <div
-            :class="[
-              'tool_item',
-              activeTool == item.toolType ? 'activeTool' : '',
-            ]"
-            v-for="item in tools"
-            :key="item.toolType"
-            @click.stop="handleChangeToolType(item.toolType)"
-          >
-            <svg class="icon" aria-hidden="true">
-              <use :xlink:href="item.icon"></use>
-            </svg>
-            <span>{{ item.name }}</span>
-          </div>
+          <transition name="slide-fade" appear>
+            <div v-if="showTools" class="right_tool">
+              <div
+                :class="[
+                  'tool_item',
+                  activeTool == item.toolType ? 'activeTool' : '',
+                ]"
+                v-for="item in tools"
+                :key="item.toolType"
+                @click.stop="handleChangeToolType(item.toolType)"
+              >
+                <svg class="icon" aria-hidden="true">
+                  <use :xlink:href="item.icon"></use>
+                </svg>
+                <span>{{ item.name }}</span>
+              </div>
+            </div>
+          </transition>
         </div>
       </div>
-    </el-dialog>
+    <!-- </el-dialog> -->
   </div>
 </template>
 
 <script>
 // eslint-disable-next-line no-unused-vars
 import cursors from "./cursor";
-import bg from "./img";
+// 引入图标
+import '../../src/assets/icon/iconfont.js'
+
 export default {
-  name: "imgDraw",
+  name: "SimpleDrawing",
+  props:{
+    // 底色
+    initConfig: {
+      type:Object,
+      default: () => {
+        return {
+          bgColor: '#ffffff', // 背景色 【默认白色】
+          strokeColor: '#333333', // 笔触颜色 【默认黑色】
+          width:400, // 默认宽度 px 【默认400】
+          height: 400 // 默认高度 px 【默认400】
+        }
+      }
+    }
+  },
+  computed:{
+    canvasStyle() {
+      return {
+        'cursor': this.cursor,
+        'width': this.currentImg.width,
+        'height': this.currentImg.height,
+        'padding': '30px'
+      }
+    }
+  },
   data() {
     return {
-      show: true,
       defaultColor: "#333333",
+      bgColor: "#ffffff",
       cursor: `url('${cursors.pen}'),auto`,
       slide: 1,
       settings: [
@@ -185,20 +210,20 @@ export default {
           name: "粗细",
           fun: "",
         },
-        {
-          icon: "#icon-fangda_huaban1",
-          name: "放大",
-          fun: () => {
-            return this.handleBeLarge();
-          },
-        },
-        {
-          icon: "#icon-suoxiao_huaban1",
-          name: "缩小",
-          fun: () => {
-            return this.handleBeSmall();
-          },
-        },
+        // {
+        //   icon: "#icon-fangda_huaban1",
+        //   name: "放大",
+        //   fun: () => {
+        //     return this.handleBeLarge();
+        //   },
+        // },
+        // {
+        //   icon: "#icon-suoxiao_huaban1",
+        //   name: "缩小",
+        //   fun: () => {
+        //     return this.handleBeSmall();
+        //   },
+        // },
       ],
       activeTool: 1,
       tools: [
@@ -269,24 +294,32 @@ export default {
       ctx_base: null,
       ctx_front: null,
       ctx_back: null,
+      canvasWidth: 400,
+      canvasHeight: 400,
       currentImg: {
-        url: bg,
-        width: "",
-        height: "",
+        url: undefined,
+        width: 800,
+        height: 800,
         scale: 1,
-        index: 0,
+        index: -1,
       },
       isExpand: 1,
       showTools: 1,
       canDraw: false,
       text: "",
-      canvasStore: [bg],
+      canvasStore: [],
       prevDis: true,
       nextDis: true,
-      baseMap: bg,
       tl: 0,
       tt: 0,
     };
+  },
+  created() {
+    // TODO:未做校验
+    this.canvasWidth = this.initConfig.width || 400
+    this.canvasHeight = this.initConfig.height || 400
+    this.defaultColor = this.initConfig.strokeColor || '#333333'
+    this.bgColor = this.initConfig.bgColor || '#ffffff'
   },
   methods: {
     /** 显示或隐藏设置栏*/
@@ -297,9 +330,6 @@ export default {
     handleShowTools(status) {
       this.showTools = status;
     },
-    handleShowCanvas() {
-      this.show = true;
-    },
     /** 工具切换*/
     handleChangeToolType(type) {
       this.activeTool = type;
@@ -308,7 +338,7 @@ export default {
           this.cursor = `url('${cursors.pen}'),auto`;
           break;
         case 2:
-          this.cursor = `crosshair`;
+          this.cursor = `default`;
           break;
         case 3:
           this.cursor = `crosshair`;
@@ -331,13 +361,14 @@ export default {
     /** 初始化画布*/
     handleInitCanvas() {
       this.currentImg = {
-        url: bg,
-        width: "",
-        height: "",
+        url: undefined,
+        width: this.canvasWidth,
+        height: this.canvasHeight,
         scale: 1,
-        index: 0,
+        index: -1,
       };
-      this.canvasStore = [bg];
+
+      this.canvasStore = [];
       this.prevDis = true;
       this.nextDis = true;
       
@@ -348,69 +379,101 @@ export default {
       // 底图画板，橡皮擦除时获取像素放到绘制画板中，达到不擦出底图的效果
       this.canvas_base = document.getElementById("ctx_base");
 
+      // 二维绘图
       this.ctx_base = this.canvas_base.getContext("2d");
       this.ctx_front = this.canvas_front.getContext("2d");
       this.ctx_back = this.canvas_back.getContext("2d");
+      
+      // 笔触颜色
       this.ctx_front.strokeStyle = this.defaultColor;
-      let img = new Image();
-      img.src = this.baseMap;
+
+      let width = this.currentImg.width;
+      let height = this.currentImg.height;
+      this.canvas_front.width = width;
+      this.canvas_front.height = height;
+      this.canvas_back.width = width;
+      this.canvas_back.height = height;
+      this.canvas_base.width = width;
+      this.canvas_base.height = height;
+
+      this.ctx_base.fillStyle= this.bgColor;
+      this.ctx_back.fillStyle= this.bgColor;
+      this.ctx_base.fillRect(0,0,width,height);
+      this.ctx_back.fillRect(0,0,width,height);
+    },
+    // 改变画布大小
+    handleCanvasSizeChange() {
+      let oWidth = this.currentImg.width
+      let oHeight = this.currentImg.height
+
+      let width= this.canvasWidth
+      let height = this.canvasHeight
+
+      if(width < 1 || width > 2000 || height < 1 || height > 2000 ) {
+        this.canvasWidth = oWidth
+        this.canvasHeight = oHeight
+        this.$message({
+          message: '长宽不可小于1像素或大于2000像素',
+          type: 'warning'
+        })
+        return
+      }
+      this.ctx_front.clearRect(0, 0, oWidth, oHeight);
+      this.ctx_back.clearRect(0, 0, oWidth, oHeight);
+      this.ctx_base.clearRect(0, 0, oWidth, oHeight);
+
+      
+      this.currentImg.width = width 
+      this.currentImg.height = height 
+
+      this.canvas_front.width = width;
+      this.canvas_front.height = height;
+      this.canvas_back.width = width;
+      this.canvas_back.height = height;
+      this.canvas_base.width = width;
+      this.canvas_base.height = height;
+
+      this.ctx_base.fillStyle= this.bgColor;
+      this.ctx_back.fillStyle= this.bgColor;
+      this.ctx_base.fillRect(0,0,width,height);
+      this.ctx_back.fillRect(0,0,width,height);
+
       let _this = this;
+      let img = new Image();
+      img.src = this.currentImg.url;
       img.onload = function() {
-        let width = parseInt(this.width);
-        let height = parseInt(this.height);
-        _this.currentImg.width = width;
-        _this.currentImg.height = height;
-        _this.canvas_front.width = width;
-        _this.canvas_front.height = height;
-        _this.canvas_back.width = width;
-        _this.canvas_back.height = height;
-        _this.canvas_base.width = width;
-        _this.canvas_base.height = height;
-        // _this.ctx_front.drawImage(this, 0, 0, width, height);
-        _this.ctx_back.drawImage(this, 0, 0, width, height);
-        _this.ctx_base.drawImage(this, 0, 0, width, height);
+        _this.ctx_front.drawImage(this, 0, 0);
+        _this.ctx_back.drawImage(this, 0, 0);
       };
     },
     /** 处理放大缩小*/
     handleDrawImage() {
       let _this = this;
       let img = new Image();
-      let baseImg = new Image();
       img.src = this.currentImg.url;
-      baseImg.src = this.baseMap;
-      _this.currentImg.width = _this.currentImg.width * this.currentImg.scale;
-      _this.currentImg.height = _this.currentImg.height * this.currentImg.scale;
-      img.onload = function() {
-        _this.canvas_front.width = _this.currentImg.width;
-        _this.canvas_front.height = _this.currentImg.height;
-        _this.canvas_back.width = _this.currentImg.width;
-        _this.canvas_back.height = _this.currentImg.height;
-        _this.ctx_front.drawImage(
-          this,
-          0,
-          0,
-          _this.currentImg.width,
-          _this.currentImg.height
-        );
-        _this.ctx_back.drawImage(
-          this,
-          0,
-          0,
-          _this.currentImg.width,
-          _this.currentImg.height
-        );
-      };
-      baseImg.onload = () => {
-        _this.canvas_base.width = _this.currentImg.width;
-        _this.canvas_base.height = _this.currentImg.height;
-        _this.ctx_base.drawImage(
-          baseImg,
-          0,
-          0,
-          _this.currentImg.width,
-          _this.currentImg.height
-        );
-      };
+      let width = this.currentImg.width = this.currentImg.width * this.currentImg.scale;
+      let height = this.currentImg.height = this.currentImg.height * this.currentImg.scale;
+      if(this.currentImg.url){
+        img.onload = function() {
+          _this.canvas_front.width = width;
+          _this.canvas_front.height = height;
+          _this.canvas_back.width = width;
+          _this.canvas_back.height = height;
+          // _this.canvas_base.width = width;
+          // _this.canvas_base.height = height;
+          // _this.ctx_front.drawImage(this, 0, 0);
+          _this.ctx_back.drawImage(this, 0, 0);
+        };
+      }else{
+          _this.ctx_front.clearRect(0, 0, width, height);
+          _this.ctx_back.clearRect(0, 0, width, height);
+          this.ctx_base.fillStyle= this.bgColor;
+          this.ctx_back.fillStyle= this.bgColor;
+          this.ctx_base.fillRect(0,0,width,height);
+          this.ctx_back.fillRect(0,0,width,height);
+      }
+
+      
     },
     handleBeLarge() {
       this.currentImg.scale = 1;
@@ -428,38 +491,44 @@ export default {
     },
     /** 下载图片*/
     handleCanvas2Img() {
+      // let canvas = this.canvas_back;
       let canvas = document.getElementById("ctx_back");
-      this.$refs.download.href = canvas.toDataURL();
-      this.$refs.download.click();
+      this.$emit('download',canvas.toDataURL())
+      // this.$refs.download.href = canvas.toDataURL();
+      // this.$refs.download.click();
+      // base64
+      
     },
     /** 清除画布*/
     handleClearCanvas() {
       this.handleInitCanvas();
     },
     handleFrommatCanvas() {
-      this.ctx_front.clearRect(
-        0,
-        0,
-        this.canvas_front.width,
-        this.canvas_front.height
-      );
+      this.ctx_front.clearRect(0, 0, this.canvas_front.width, this.canvas_front.height);
     },
     handleDrawCanvas(type) {
-      this.canDraw = false;
-      let sx, sy, mx, my;
-      let text = document.getElementById("text");
+      this.canDraw = false
+      let sx, sy, mx, my
+      let offsetTop = 0
+      let offsetLeft = 0
+      let text = document.getElementById("text")
       //鼠标按下
       let mousedown = (e) => {
-        this.ctx_front.strokeStyle = this.defaultColor;
-        this.ctx_front.lineWidth = this.slide;
+        // 笔触颜色
+        this.ctx_front.strokeStyle = this.defaultColor
+        // 线的粗细
+        this.ctx_front.lineWidth = this.slide
         e = e || window.event;
-        sx = e.clientX - this.canvas_front.offsetLeft;
-        sy = e.clientY - this.canvas_front.offsetTop;
+        const clientRect = this.canvas_front.getBoundingClientRect()
+        offsetTop = clientRect.top
+        offsetLeft = clientRect.left
+        sx = e.clientX - offsetLeft + this.$refs.body.scrollLeft;
+        sy = e.clientY - offsetTop + this.$refs.body.scrollTop;
         const cbx = this.ctx_base.getImageData(
           e.offsetX - this.slide / 2,
           e.offsetY - this.slide / 2,
-          this.slide * 2,
-          this.slide * 2
+          this.slide * 6,
+          this.slide * 6
         );
         this.ctx_front.moveTo(sx, sy);
         this.canDraw = true;
@@ -485,32 +554,36 @@ export default {
               e.offsetY + this.canvas_front.offsetTop - 10 + "px";
             text.style.zIndex = 10;
             text.style.display = "block";
-            this.tl = e.offsetX - 20;
-            this.tt = e.offsetY + 10;
+            this.tl = e.offsetX - 45;
+            this.tt = e.offsetY - 15;
             break;
         }
       };
       let mousemove = (e) => {
         e = e || window.event;
-        mx = e.clientX - this.canvas_front.offsetLeft;
-        my = e.clientY - this.canvas_front.offsetTop;
+        mx = e.clientX - offsetLeft + this.$refs.body.scrollLeft;
+        my = e.clientY - offsetTop + this.$refs.body.scrollTop;
+        // mx = e.clientX
+        // my = e.clientY
+        
         const cbx = this.ctx_base.getImageData(
           e.offsetX - this.slide / 2,
           e.offsetY - this.slide / 2,
-          this.slide * 2,
-          this.slide * 2
+          this.slide * 6,
+          this.slide * 6
         );
         if (this.canDraw) {
           switch (type) {
             case 1:
-              this.ctx_front.lineTo(mx - 8, my - 49);
+              // this.ctx_front.lineTo(mx - 53, my - 85);
+              this.ctx_front.lineTo(mx - 25, my - 5);
               this.ctx_front.stroke();
               break;
             case 2:
               this.handleFrommatCanvas();
               this.ctx_front.beginPath();
-              this.ctx_front.moveTo(sx - 10, sy - 79);
-              this.ctx_front.lineTo(mx - 10, my - 79);
+              this.ctx_front.moveTo(sx - 30, sy - 30 + this.slide / 2);
+              this.ctx_front.lineTo(mx - 30, my - 30 + this.slide / 2);
               this.ctx_front.stroke();
               break;
             case 3:
@@ -519,111 +592,112 @@ export default {
               // eslint-disable-next-line no-case-declarations
               let rds = Math.sqrt(
                 (sx - 10 - mx) * (sx - 10 - mx) +
-                  (sy - 49 - my) * (sy - 49 - my)
+                  (sy - 10 - my) * (sy - 10 - my)
               );
-              this.ctx_front.arc(sx - 15, sy - 69, rds, 0, Math.PI * 2, false);
-              this.ctx_front.stroke();
-              break;
+              this.ctx_front.arc(sx - 27, sy - 27, rds, 0, Math.PI * 2, false)
+              this.ctx_front.stroke()
+              break
             case 4:
-              this.handleFrommatCanvas();
-              this.ctx_front.beginPath();
-              this.ctx_front.moveTo(sx - 10, sy - 79);
-              this.ctx_front.lineTo(mx - 10, sy - 79);
-              this.ctx_front.lineTo(mx - 10, my - 79);
-              this.ctx_front.lineTo(sx - 10, my - 79);
-              this.ctx_front.lineTo(sx - 10, sy - 79);
+              this.handleFrommatCanvas()
+              this.ctx_front.beginPath()
+              this.ctx_front.moveTo(sx - 30, sy - 30 - this.slide / 2);
+              this.ctx_front.lineTo(mx - 30 - this.slide / 2, sy - 30 - this.slide / 2);
+              this.ctx_front.lineTo(mx - 30 - this.slide / 2, my - 30 - this.slide / 2);
+              this.ctx_front.lineTo(sx - 30 - this.slide / 2, my - 30 - this.slide / 2);
+              this.ctx_front.lineTo(sx - 30 - this.slide / 2, sy - 30 - this.slide);
               this.ctx_front.stroke();
-              break;
+              break
             case 5:
               this.ctx_front.putImageData(
                 cbx,
-                e.offsetX - this.slide / 2,
-                e.offsetY - this.slide / 2
-              );
-              break;
+                e.offsetX - this.slide / 2 - 20,
+                e.offsetY - this.slide / 2 - 20
+              )
+              break
           }
         }
       };
       let mouseup = () => {
         if (this.canDraw) {
-          this.canDraw = false;
-          this.ctx_front.closePath();
+          this.canDraw = false
+          this.ctx_front.closePath()
           if (type!=6) {
-            console.log('非文字存储');
-            this.handleSaveCanvasStore();
+            console.log('非文字存储')
+            this.handleSaveCanvasStore()
           }
         }
-      };
-      this.canvas_front.onmousedown = (e) => mousedown(e);
-      this.canvas_front.onmousemove = (e) => mousemove(e);
-      this.canvas_front.onmouseup = (e) => mouseup(e);
-      this.canvas_front.onmouseout = (e) => mouseup(e);
-      this.canvas_front.onmouseleave = (e) => mouseup(e);
+      }
+      this.canvas_front.onmousedown = (e) => mousedown(e)
+      this.canvas_front.onmousemove = (e) => mousemove(e)
+      this.canvas_front.onmouseup = (e) => mouseup(e)
+      this.canvas_front.onmouseout = (e) => mouseup(e)
+      this.canvas_front.onmouseleave = (e) => mouseup(e)
     },
     /** 失焦或者回车绘制文本，框隐藏*/
     handleTextBlur() {
-      let text = document.getElementById("text");
-      this.ctx_front.font = `300 ${text.style.fontSize} sans-serif`;
-      this.ctx_front.fillStyle = this.defaultColor;
-      this.ctx_front.fillText(this.text, this.tl, this.tt);
-      text.style.display = "none";
-      this.text = "";
+      let text = document.getElementById("text")
+      this.ctx_front.font = `300 ${text.style.fontSize} sans-serif`
+      this.ctx_front.fillStyle = this.defaultColor
+      this.ctx_front.fillText(this.text, this.tl, this.tt)
+      text.style.display = "none"
+      this.text = ""
       text.value=''
-      this.handleSaveCanvasStore();
+      this.handleSaveCanvasStore()
     },
     /** 上一步*/
     handlePrev() {
-      if (this.currentImg.index > 0) {
-        this.nextDis = false;
-        this.currentImg.index -= 1;
-        this.currentImg.index==0?this.prevDis = true:this.prevDis = false
-        this.currentImg.url = this.canvasStore[this.currentImg.index];
-        this.currentImg.scale = 1;
-        this.handleDrawImage();
+      if (this.currentImg.index >= 0) {
+        this.nextDis = false
+        this.currentImg.index -= 1
+        this.prevDis = this.currentImg.index < 0
+        this.currentImg.url = this.prevDis ? undefined : this.canvasStore[this.currentImg.index]
+        this.currentImg.scale = 1
+        this.handleDrawImage()
       } else {
-        this.prevDis = true;
+        this.prevDis = true
       }
     },
     /** 下一步*/
     handleNext() {
       if (this.currentImg.index<this.canvasStore.length-1) {
-        this.prevDis = false;
-        this.currentImg.index += 1;
-        this.currentImg.index==this.canvasStore.length-1?this.nextDis = true:this.nextDis = false
-        this.currentImg.url = this.canvasStore[this.currentImg.index];
-        this.currentImg.scale = 1;
-        this.handleDrawImage();
+        this.prevDis = false
+        this.currentImg.index += 1
+        this.nextDis = this.currentImg.index == this.canvasStore.length - 1
+        this.currentImg.url = this.canvasStore[this.currentImg.index]
+        this.currentImg.scale = 1
+        this.handleDrawImage()
       } else {
-        this.nextDis = true;
+        this.nextDis = true
       }
     },
     /** 保存绘制*/
     handleSaveCanvasStore() {
-      let url = this.canvas_front.toDataURL();
-      let image = new Image();
-      image.src = url;
+      let url = this.canvas_front.toDataURL()
+      let image = new Image()
+      image.src = url
       image.onload = () => {
+        // 清空front区域
         this.ctx_front.clearRect(
           0,
           0,
           this.canvas_front.width,
           this.canvas_front.height
         );
-        this.ctx_front.drawImage(image, 0, 0, image.width, image.height);
-        this.ctx_back.drawImage(image, 0, 0, image.width, image.height);
-        const url2 = this.canvas_back.toDataURL();
-        this.currentImg.url = url2;
-        this.currentImg.index += 1;
-        this.canvasStore.push(url2);
-        this.prevDis = false;
-        console.log(this.canvasStore);
+        this.ctx_front.drawImage(image, 0, 0, image.width, image.height)
+        this.ctx_back.drawImage(image, 0, 0, image.width, image.height)
+        const url2 = this.canvas_back.toDataURL()
+        this.currentImg.url = url2
+        this.currentImg.index += 1
+        this.canvasStore.push(url2)
+        this.prevDis = false
+        console.log(this.canvasStore)
       };
     },
   },
   mounted() {
     this.$nextTick(() => {
-      this.handleInitCanvas();
-      this.handleChangeToolType(1);
+      this.handleInitCanvas()
+      this.handleChangeToolType(1)
     });
   },
   watch: {},
@@ -636,6 +710,7 @@ export default {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  user-select: none;
 }
 .icon {
   width: 1em;
@@ -644,32 +719,18 @@ export default {
   fill: currentColor;
   overflow: hidden;
 }
-/deep/.el-dialog {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  & > div {
-    width: 100%;
-    box-sizing: border-box;
-  }
-  .el-dialog__header {
-    padding: 0 20px;
-    p {
-      padding: 20px 0;
-      border-bottom: 1px solid #bdbdbd;
-    }
-  }
-  .el-dialog__body {
+.imgDraw {
+    background-color: #eeeeee;
+    height:100vh;
     padding: 10px 20px;
     flex: 1;
-    height: 0;
     padding-top: 0;
-    position: relative;
     overflow: hidden;
     .d_body {
+      position: relative;
       height: 100%;
       overflow-y: auto;
-      padding-top: 20px;
+      padding-top: 50px;
       .board {
         position: relative;
         min-height: 100%;
@@ -700,6 +761,22 @@ export default {
           background: transparent;
           line-height: 30px;
           display: none;
+        }
+      }
+      .top_tools {
+        align-items: center;
+        .size_setting {
+          >input {
+            width:50px;
+            height: 30px;
+            padding: 5px 10px;
+            background: #ffffff;
+            border: 1px solid #eeeeee;
+            outline: none;
+          }
+          span {
+            margin: 0 10px;
+          }
         }
       }
       .tools {
@@ -812,16 +889,18 @@ export default {
         }
       }
       .bars {
+        position: absolute;
         top: 100px;
         right: 30px;
-        z-index: 10;
-        padding: 15px;
-        border-top-left-radius: 4px;
-        border-bottom-left-radius: 4px;
-        border: 1px solid #eeeeee;
-        width: auto;
-        display: flex;
-        flex-direction: column;
+        .right_tool {
+          position: absolute;
+          top: 50px;
+          right: 0;
+          padding: 15px;
+          background-color: #ffffff;
+          border-radius: 5px;
+          border: 1px solid #eeeeee;
+        }
         .tool_item {
           cursor: pointer;
           &:not(:last-of-type) {
@@ -855,6 +934,10 @@ export default {
           }
         }
         .arrow {
+          z-index: 10;
+          position: absolute;
+          top: 200px;
+          right: 0;
           width: 20px;
           height: 20px;
           text-align: center;
@@ -865,45 +948,42 @@ export default {
           position: absolute;
           left: -10px;
           background: #ffffff;
-          top: 50%;
+          // top: 50%;
           transform: translateY(-50%);
           cursor: pointer;
         }
         .el-icon-s-tools {
-          left: -30px;
-          width: 30px;
-          height: 30px;
-          line-height: 30px;
-          font-size: 20px;
-          color: dodgerblue;
-          border-color: dodgerblue;
+          // left: -30px;
+          // width: 30px;
+          // height: 30px;
+          // line-height: 30px;
+          // font-size: 20px;
+          // color: dodgerblue;
+          // border-color: dodgerblue;
+          left: calc(~"100% - 10px");
         }
         .el-icon-arrow-right {
           left: calc(~"100% - 10px");
         }
       }
-      .hideTools {
-        right: -100px;
-      }
+      // .hideTools {
+      //   right: -100px;
+      // }
       .noExpand {
         top: -50px;
       }
     }
   }
-  .el-dialog__footer {
-    text-align: center !important;
-    span {
-      button {
-        padding-left: 40px;
-        padding-right: 40px;
-        &:first-of-type {
-          margin-right: 50px;
-        }
-        &:last-of-type {
-          margin-left: 50px;
-        }
-      }
-    }
-  }
+  .slide-fade-enter-active {
+  transition: all .3s ease;
+}
+.slide-fade-leave-active {
+  transition: all .3s ease;
+  // transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+}
+.slide-fade-enter, .slide-fade-leave-to
+/* .slide-fade-leave-active for below version 2.1.8 */ {
+  transform: translateX(10px);
+  opacity: 0;
 }
 </style>

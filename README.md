@@ -1,4 +1,4 @@
-# Vue image-painter
+# Vue image-painter（原作者代码）
 
 图片涂鸦、绘制、标注
 
@@ -49,7 +49,7 @@ this.canvas_front = document.getElementById("ctx_front");
 // 用于生成绘制后效果图的画板
 this.canvas_back = document.getElementById("ctx_back");
 
-// 底图画板，橡皮擦除时获取像素放到绘制画板中，达到不擦出底图的效果
+// 底图画板，橡皮擦除时获取像素放到绘制画板中，达到不擦出底图的效果(移动过快会产生问题)
 this.canvas_base = document.getElementById("ctx_base");
 ```
 
@@ -189,6 +189,15 @@ npm run build
 npm run lint
 ```
 
-### 感谢支持
-
-> 开发不易，且用且珍惜 ，随手给个星，开心到起飞
+### 组件prop
+initConfig: {
+  type:Object,
+  default: () => {
+    return {
+      bgColor: '#ffffff', // 背景色 【默认白色】
+      strokeColor: '#333333', // 笔触颜色 【默认黑色】
+      width:400, // 默认宽度 px 【默认400】
+      height: 400 // 默认高度 px 【默认400】
+    }
+  }
+}

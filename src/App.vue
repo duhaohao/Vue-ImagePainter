@@ -1,23 +1,22 @@
 <template>
   <div id="app">
-    <ImgDraw />
+    <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
+    <SimpleDrawing />
   </div>
 </template>
 
 <script>
-import ImgDraw from './components/imgDraw/imgDraw'
+import { SimpleDrawing } from '../packages/index';
 
 export default {
-  name: 'app',
-  components: {
-    ImgDraw
-  }
+  name: 'App',
+  components:{ SimpleDrawing }
 }
 </script>
 
 <style>
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;

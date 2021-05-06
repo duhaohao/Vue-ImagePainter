@@ -1,8 +1,11 @@
 {
-  "name": "Vue-ImagePainter",
-  "version": "0.1.0",
-  "private": true,
+  "name": "vue-simple-drawing",
+  "version": "0.5.3",
+  "main": "./lib/vue-simple-drawing.umd.min.js",
+  "description": "A simple drawing tool",
+  "private": false,
   "scripts": {
+    "lib": "vue-cli-service build --target lib --name vue-simple-drawing --dest lib packages/index.js",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
@@ -14,7 +17,7 @@
     "vue": "^2.6.11"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "~4.4.0",
+    "@vue/cli-plugin-babel": "~4.4.0", 
     "@vue/cli-plugin-eslint": "~4.4.0",
     "@vue/cli-service": "~4.4.0",
     "babel-eslint": "^10.1.0",

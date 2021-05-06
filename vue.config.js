@@ -1,11 +1,13 @@
-const env = process.env.NODE_ENV;
 module.exports = {
-  devServer: {
-    port: 8080,
-    open: true,
-  },
-  publicPath: env === "production" ? "./" : "",
-  indexPath: "index.html",
-  outputDir: "docs",
-  assetsDir: "",
-};
+  // 修改 src 为 examples
+  filenameHashing:false,
+  // pages: {
+  //   index: {
+  //     entry: 'examples/main.js',
+  //     // entry: 'packages/index.js',
+  //     template: 'public/index.html',
+  //     filename: 'index.html'
+  //   }
+  // },
+  css:{ extract:false }
+}
