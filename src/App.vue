@@ -6,11 +6,11 @@
 </template>
 
 <script>
-import { SimpleDrawing } from '../packages/index';
+import { SimpleDrawing } from '../packages/index'
 
 export default {
   name: 'App',
-  components:{ SimpleDrawing }
+  components: { SimpleDrawing }
 }
 </script>
 
@@ -21,6 +21,6 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  /* margin-top: 60px; */
 }
 </style>

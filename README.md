@@ -2,6 +2,21 @@
 
 图片涂鸦、绘制、标注
 
+
+# 引入方式
+import { SimpleDrawing } from 'vue-simple-drawing'
+
+或 
+
+import SimpleDrawing from 'vue-simple-drawing
+Vue.use(SimpleDrawing)
+
+# 问题
+该组件在使用import { SimpleDrawing } from 'vue-simple-drawing 引入页面时，打包部署后
+chrome打开该页面会出现正则匹配问题耗时14-15秒，但插件仍能正常使用。firefox与safari正常
+建议在main.js 直接使用Vue.use引入
+
+
 [在线预览(GitHub)](https://kevin123x.github.io/Vue-ImagePainter)
 
 [在线预览(Gitee)](http://keivn.vip.com.gitee.io/vue-imagepainter)

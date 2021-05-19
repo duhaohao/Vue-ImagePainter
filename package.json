@@ -1,6 +1,6 @@
 {
   "name": "vue-simple-drawing",
-  "version": "0.5.3",
+  "version": "0.5.6",
   "main": "./lib/vue-simple-drawing.umd.min.js",
   "description": "A simple drawing tool",
   "private": false,

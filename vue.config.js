@@ -1,6 +1,6 @@
 module.exports = {
   // 修改 src 为 examples
-  filenameHashing:false,
+  filenameHashing: false,
   // pages: {
   //   index: {
   //     entry: 'examples/main.js',
@@ -9,5 +9,5 @@ module.exports = {
   //     filename: 'index.html'
   //   }
   // },
-  css:{ extract:false }
+  css: { extract: false }
 }
