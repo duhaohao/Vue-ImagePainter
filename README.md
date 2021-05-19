@@ -1,8 +1,3 @@
-# Vue image-painter（原作者代码）
-
-图片涂鸦、绘制、标注
-
-
 # 引入方式
 import { SimpleDrawing } from 'vue-simple-drawing'
 
@@ -16,6 +11,10 @@ Vue.use(SimpleDrawing)
 chrome打开该页面会出现正则匹配问题耗时14-15秒，但插件仍能正常使用。firefox与safari正常
 建议在main.js 直接使用Vue.use引入
 
+
+# Vue image-painter（原作者及其github）
+
+图片涂鸦、绘制、标注
 
 [在线预览(GitHub)](https://kevin123x.github.io/Vue-ImagePainter)
 
